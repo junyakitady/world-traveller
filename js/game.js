@@ -31,6 +31,7 @@ const GameEngine = (() => {
     const CITIES_DATA = window.CITIES_DATA || [];
 
     const citiesGridLookup = {};
+    let borderFeatures = [];
 
     // Hero Entity details
     const player = {
@@ -74,17 +75,17 @@ const GameEngine = (() => {
         particles: []
     };
 
-    // Preset Teleport points
+    // Preset Teleport points (Customized 9 Global Cities Presets)
     const LANDMARKS = {
-        tokyo: { name: "東京 (日本)", coords: [139.6917, 35.6895], desc: "日本の首都。なだらかな草原と近くの富士山脈。" },
-        everest: { name: "エベレスト山脈 (ネパール)", coords: [86.9250, 27.9881], desc: "世界最高峰。そびえ立つ氷雪の岩壁と歩けない極限山脈。" },
-        sahara: { name: "サハラ砂漠 (エジプト)", coords: [25.0000, 25.0000], desc: "世界最大の熱帯砂漠。見渡す限りの黄金の砂丘。" },
-        amazon: { name: "アマゾン熱帯雨林 (ブラジル)", coords: [-62.0000, -3.0000], desc: "熱帯の巨大ジャングル。豊かな密林と大湿地帯。" },
-        canyon: { name: "グランドキャニオン (米国)", coords: [-112.1129, 36.0544], desc: "大渓谷。赤茶けた台地と起伏に富む山地草原。" },
-        antarctica: { name: "南極極点", coords: [0.0000, -90.0000], desc: "極寒の氷雪高原。静寂に包まれた広大な雪原地帯。" },
-        barrier: { name: "グレートバリアリーフ (豪州)", coords: [147.6333, -18.2833], desc: "世界最大級のサンゴ礁。熱帯のターコイズブルーの浅海域。" },
-        mariana: { name: "マリアナ海溝 (太平洋)", coords: [142.2000, 11.3500], desc: "地球最深部。深海魚が泳ぐ静寂のディープ・オーシャン。" },
-        giza: { name: "ギザのピラミッド (エジプト)", coords: [31.1342, 29.9792], desc: "砂漠地帯にそびえる古代の巨石ピラミッド。" }
+        tokyo: { name: "東京 (日本)", coords: [139.6917, 35.6895], isMegalopolis: true, desc: "日本の首都。無数の高層ビルと光がひしめく巨大なメガロポリス。" },
+        london: { name: "ロンドン (英国)", coords: [-0.1278, 51.5074], isMegalopolis: true, desc: "イギリスの首都。テムズ川沿いに歴史的な古城と最新の高層ビルが並ぶ街。" },
+        singapore: { name: "シンガポール", coords: [103.8431, 1.3067], isMegalopolis: false, desc: "清潔さと熱帯林が融合する最先端のガーデンシティ国家。" },
+        dubai: { name: "ドバイ (UAE)", coords: [55.2708, 25.2048], isMegalopolis: false, desc: "ペルシャ湾にそびえ立つ世界一の超高層タワーと砂漠のオアシス都市。" },
+        sydney: { name: "シドニー (豪州)", coords: [151.2093, -33.8688], isMegalopolis: false, desc: "白いオペラハウスと青い太平洋に囲まれた美しい豪州の港湾都市。" },
+        hawaii: { name: "ハワイ (米国)", coords: [-157.8583, 21.3069], isMegalopolis: false, desc: "ヤシの木が揺れる美しいワイキキビーチと火山がそびえる太平洋の楽園。" },
+        san_francisco: { name: "サンフランシスコ (米国)", coords: [-122.4194, 37.7749], isMegalopolis: false, desc: "霧に包まれる赤いゴールデンゲートブリッジと坂の多い美しき丘陵都市。" },
+        new_york: { name: "ニューヨーク (米国)", coords: [-74.0060, 40.7128], isMegalopolis: true, desc: "マンハッタンの摩天楼がそびえ立つ、世界の文化と金融の超巨大中心地。" },
+        dallas: { name: "ダラス (米国)", coords: [-96.7970, 32.7767], isMegalopolis: false, desc: "テキサス平原の広大な南部大都市。摩天楼とカウボーイ文化の融合地。" }
     };
 
     const BIOME_DETAILS = {
@@ -327,14 +328,14 @@ const GameEngine = (() => {
 
         const q = query.trim().toLowerCase();
 
-        // If the query is empty, show our featured standard 8 preset landmarks!
+        // If the query is empty, show our featured standard 9 preset landmarks!
         if (q === "") {
             Object.keys(LANDMARKS).forEach(key => {
                 const item = LANDMARKS[key];
                 const btn = document.createElement('button');
                 btn.className = 'landmark-btn';
                 // Color Megalopolises gold, others standard white/silver!
-                const isMegalopolis = (key !== 'everest' && key !== 'barrier' && key !== 'mariana' && key !== 'antarctica');
+                const isMegalopolis = item.isMegalopolis;
                 
                 btn.innerHTML = `
                     <span class="landmark-title" style="color: ${isMegalopolis ? '#fbbf24' : '#fff'}; font-weight: ${isMegalopolis ? '700' : '500'};">${escapeHTML(item.name)}</span>
@@ -392,27 +393,79 @@ const GameEngine = (() => {
     }
 
     /**
+     * Parses a world boundaries GeoJSON into local precompiled grid coordinates rings.
+     */
+    function parseGeoJSONBorders(geojson) {
+        const borderFeatures = [];
+        if (!geojson || !geojson.features) return borderFeatures;
+
+        geojson.features.forEach(feature => {
+            const name = feature.properties ? feature.properties.name : "Unknown";
+            const geometry = feature.geometry;
+            if (!geometry) return;
+
+            const rings = [];
+            if (geometry.type === "Polygon") {
+                geometry.coordinates.forEach(ring => {
+                    rings.push(ring.map(coord => ({
+                        x: (coord[0] + 180) / 360 * W,
+                        y: (90 - coord[1]) / 180 * H
+                    })));
+                });
+            } else if (geometry.type === "MultiPolygon") {
+                geometry.coordinates.forEach(polygon => {
+                    polygon.forEach(ring => {
+                        rings.push(ring.map(coord => ({
+                            x: (coord[0] + 180) / 360 * W,
+                            y: (90 - coord[1]) / 180 * H
+                        })));
+                    });
+                });
+            }
+
+            borderFeatures.push({ name, rings });
+        });
+        return borderFeatures;
+    }
+
+    /**
      * Loads physical displacement raster heights map, samples grids, pre-renders terrain textures templates.
      */
     function loadHeightmapAndStart() {
         const sub = document.querySelector('.loading-sub');
-        sub.textContent = "高度マップ及び地表カラー画像をロード中...";
+        sub.textContent = "高度マップ、地表カラー画像及び国境境界をロード中...";
 
         const heightmapImg = new Image();
         const satelliteImg = new Image();
 
         let heightmapLoaded = false;
         let satelliteLoaded = false;
+        let bordersLoaded = false;
 
-        const onImageLoaded = () => {
-            if (heightmapLoaded && satelliteLoaded) {
+        const onAssetLoaded = () => {
+            if (heightmapLoaded && satelliteLoaded && bordersLoaded) {
                 processGeographicData(heightmapImg, satelliteImg, sub);
             }
         };
 
+        // Load Borders GeoJSON in parallel
+        fetch('assets/world.geojson')
+            .then(res => res.json())
+            .then(data => {
+                borderFeatures = parseGeoJSONBorders(data);
+                bordersLoaded = true;
+                onAssetLoaded();
+            })
+            .catch(err => {
+                console.error("Failed to load world borders:", err);
+                borderFeatures = []; // Fallback to empty borders gracefully
+                bordersLoaded = true;
+                onAssetLoaded();
+            });
+
         heightmapImg.onload = () => {
             heightmapLoaded = true;
-            onImageLoaded();
+            onAssetLoaded();
         };
         heightmapImg.onerror = () => {
             sub.textContent = "エラー：高度データの取得に失敗しました。再読込してください。";
@@ -421,7 +474,7 @@ const GameEngine = (() => {
 
         satelliteImg.onload = () => {
             satelliteLoaded = true;
-            onImageLoaded();
+            onAssetLoaded();
         };
         satelliteImg.onerror = () => {
             sub.textContent = "エラー：衛星カラー画像の取得に失敗しました。再読込してください。";
@@ -486,10 +539,22 @@ const GameEngine = (() => {
             }
         }
 
+        // Special override to keep the Bab-el-Mandeb Strait open for sailing travel between the Red Sea and Gulf of Aden!
+        const straitCells = [
+            { c: 446, r: 153 },
+            { c: 446, r: 154 },
+            { c: 446, r: 155 }
+        ];
+        straitCells.forEach(cell => {
+            biomesGrid[cell.c][cell.r] = 'shallowSea';
+            elevationGrid[cell.r * W + cell.c] = 0; // force sea-level water elevation
+            heightsCache[cell.c][cell.r] = -4.0; // shallow sea negative height displacement
+        });
+
         // Register and override world cities!
         CITIES_DATA.forEach(city => {
-            const c = Math.round((city.coords[0] + 180) / 360 * W) % W;
-            const r = Math.max(0, Math.min(H - 1, Math.round((90 - city.coords[1]) / 180 * H)));
+            const c = Math.floor((city.coords[0] + 180) / 360 * W) % W;
+            const r = Math.max(0, Math.min(H - 1, Math.floor((90 - city.coords[1]) / 180 * H)));
             
             citiesGridLookup[`${c}_${r}`] = city;
             biomesGrid[c][r] = city.type; // override biome floor to 'megalopolis' or 'village'
@@ -918,8 +983,8 @@ const GameEngine = (() => {
                 player.lastStepX = player.gridX;
                 player.lastStepY = player.gridY;
 
-                const c = (Math.round(player.gridX) % W + W) % W;
-                const r = Math.max(0, Math.min(H - 1, Math.round(player.gridY)));
+                const c = (Math.floor(player.gridX) % W + W) % W;
+                const r = Math.max(0, Math.min(H - 1, Math.floor(player.gridY)));
                 const currentBiome = biomesGrid[c][r];
 
                 const soundType = (player.travelMode === 'sail') ? 'sail' : currentBiome;
@@ -971,8 +1036,8 @@ const GameEngine = (() => {
         }
 
         // 3. Weather intensities mapping
-        const col = (Math.round(player.gridX) % W + W) % W;
-        const row = Math.max(0, Math.min(H - 1, Math.round(player.gridY)));
+        const col = (Math.floor(player.gridX) % W + W) % W;
+        const row = Math.max(0, Math.min(H - 1, Math.floor(player.gridY)));
         const currentBiome = biomesGrid[col][row];
 
         weather.targetSnow = (currentBiome === 'snowfield') ? 1.0 : 0.0;
@@ -1017,8 +1082,8 @@ const GameEngine = (() => {
      * Telemetry numbers refresh, mini clock ticks, coordinates minimap blinker anchors.
      */
     function updateHUD() {
-        const colIdx = (Math.round(player.gridX) % W + W) % W;
-        const rowIdx = Math.max(0, Math.min(H - 1, Math.round(player.gridY)));
+        const colIdx = (Math.floor(player.gridX) % W + W) % W;
+        const rowIdx = Math.max(0, Math.min(H - 1, Math.floor(player.gridY)));
 
         const lon = -180 + 360 * (colIdx / W);
         const lat = 90 - 180 * (rowIdx / H);
@@ -1082,18 +1147,58 @@ const GameEngine = (() => {
             progressFill.style.width = `${(timeOfDay / 24.0) * 100}%`;
         }
 
-        // Minimap pulsing indicator update
+        // Minimap pulsing indicator update with continuous smooth glide
         const mLocator = document.getElementById('minimap-locator');
         const mGlow = document.getElementById('minimap-locator-glow');
         
         const rect = document.getElementById('minimap-wrapper').getBoundingClientRect();
-        const pxX = (colIdx / W) * rect.width;
-        const pxY = (rowIdx / H) * rect.height;
+        const pxX = (((player.gridX % W + W) % W) / W) * rect.width;
+        const pxY = (Math.max(0, Math.min(H - 1, player.gridY)) / H) * rect.height;
 
         mLocator.style.left = `${pxX}px`;
         mLocator.style.top = `${pxY}px`;
         mGlow.style.left = `${pxX}px`;
         mGlow.style.top = `${pxY}px`;
+    }
+
+    /**
+     * Renders national boundaries lines from local precompiled rings, supporting infinite wrapping.
+     */
+    function drawNationalBorders(offsetX, offsetY) {
+        const showBordersNode = document.getElementById('checkbox-borders');
+        if (!showBordersNode || !showBordersNode.checked) return;
+        if (!borderFeatures || borderFeatures.length === 0) return;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 3.0;
+        ctx.setLineDash([3, 4]); // Clean subtle retro dash style
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        const shifts = [-W * TILE_SIZE, 0, W * TILE_SIZE];
+
+        shifts.forEach(shiftX => {
+            ctx.beginPath();
+            borderFeatures.forEach(feature => {
+                feature.rings.forEach(ring => {
+                    if (ring.length < 2) return;
+
+                    const startX = ring[0].x * TILE_SIZE + offsetX + shiftX;
+                    const startY = ring[0].y * TILE_SIZE + offsetY;
+                    ctx.moveTo(startX, startY);
+
+                    for (let i = 1; i < ring.length; i++) {
+                        const px = ring[i].x * TILE_SIZE + offsetX + shiftX;
+                        const py = ring[i].y * TILE_SIZE + offsetY;
+                        ctx.lineTo(px, py);
+                    }
+                });
+            });
+            ctx.stroke();
+        });
+
+        ctx.restore();
     }
 
     /**
@@ -1230,6 +1335,9 @@ const GameEngine = (() => {
                 }
             }
         }
+
+        // 2.5. Draw National Borders (Vector Lines Layer)
+        drawNationalBorders(offsetX, offsetY);
 
         // 3. Push Player/Hero to Y-Sorted Queue!
         const playerPixelX = player.gridX * TILE_SIZE;
