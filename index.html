@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>2D-HD Retro Earth Explorer - ドラゴンクエスト風地球大冒険</title>
+    <meta name="description" content="ドラゴンクエストの懐かしい2D-HDレトロ世界観で、本物の地球高度データから生成された美しいピクセルアートフィールドを勇者が自由に冒険できるインタラクティブ3Dアプリ。">
+    <meta name="keywords" content="ドラゴンクエスト, 2D-HD, 地球高度データ, レトロゲーム, WebGL, Three.js, ピクセルアート">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="crt-effect crt-active">
+
+    <!-- Loading Screen Overlay -->
+    <div id="loading-overlay" id="element-loading">
+        <div class="spinner"></div>
+        <h2 class="loading-text">Loading Physical World Data</h2>
+        <p class="loading-sub">地球の高度画像を読み込み中...</p>
+    </div>
+
+    <!-- 3D Render Viewport -->
+    <main id="viewport-container"></main>
+
+    <!-- Linear Gradient Tilt-Shift Blur Panels (CSS Accelerated) -->
+    <div class="tilt-shift-mask tilt-shift-top"></div>
+    <div class="tilt-shift-mask tilt-shift-bottom"></div>
+
+    <!-- Interactive HUD Overlay layer -->
+    <div id="hud-overlay">
+        
+        <!-- Main Layout Columns container -->
+        <div class="hud-main-columns">
+            
+            <!-- Left Column: Header and Left Sidebar -->
+            <div class="hud-column-left">
+                <!-- Header glass layout panel -->
+                <header class="glass-panel hud-interactive" id="hud-header-panel">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="logo-badge">
+                            <span class="logo-icon">勇</span>
+                        </div>
+                        <div>
+                            <h1 style="font-size: 16px; font-weight: 800; letter-spacing: 1px; color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.2);">
+                                RETRO EARTH EXPLORER
+                            </h1>
+                            <p style="font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">
+                                HD-2D リアル地球ピクセル大冒険
+                            </p>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Left sidebar: Telemetry stats card -->
+                <section id="hud-sidebar-left" class="glass-panel hud-interactive">
+                <div style="display: flex; flex-direction: column; gap: 18px;">
+                    
+                    <!-- Title group -->
+                    <div>
+                        <h2 style="font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 700;">
+                            Hero Telemetry
+                        </h2>
+                        <div style="height: 1px; background: rgba(255,255,255,0.08); margin-top: 8px;"></div>
+                    </div>
+
+                    <!-- Coordinates Display -->
+                    <div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">緯度 (Latitude)</span>
+                            <span class="telemetry-val font-mono-lcd text-glow-cyan" id="ticker-coord-lat">0.0000° N</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">経度 (Longitude)</span>
+                            <span class="telemetry-val font-mono-lcd text-glow-cyan" id="ticker-coord-lon">0.0000° E</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">地表高度 (Altitude)</span>
+                            <span class="telemetry-val font-mono-lcd text-glow-amber" id="ticker-elevation">0 m</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">移動状態 (Status)</span>
+                            <span class="telemetry-val" id="ticker-speed" style="font-size: 12px; color: #cbd5e1;">待機中 (Idle)</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="telemetry-label">地表色 (RGB/HSL)</span>
+                            <span class="telemetry-val font-mono-lcd text-glow-cyan" id="ticker-color-val" style="font-size: 11px; color: #cbd5e1;">R:0 G:0 B:0 / H:0° S:0% L:0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Current active Biome stats details -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);">
+                        <span class="telemetry-label" style="display: block; margin-bottom: 8px;">現在バイオーム (Current Biome)</span>
+                        <div id="ticker-biome-badge" class="biome-badge biome-plains">
+                            <span>🌍</span> 平地草原 (Grassland)
+                        </div>
+                        <p class="paragraph-desc" id="ticker-biome-desc">
+                            青々と茂る穏やかな緑の平地。冒険の旅に最も適した過ごしやすい草原です。
+                        </p>
+                    </div>
+
+                    <!-- Dynamic Day/Night clock card -->
+                    <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="telemetry-label">世界時計 (Clock)</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span id="hud-time-icon" class="time-icon">☀️</span>
+                                <span id="hud-time-val" class="font-mono-lcd text-glow-amber" style="font-size: 16px; font-weight: bold;">12:00</span>
+                            </div>
+                        </div>
+                        <div class="time-progress-container">
+                            <div class="time-bar">
+                                <div id="hud-time-fill" class="time-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+            </div> <!-- End Left Column -->
+
+            <!-- Right Column: Right Sidebar (Starts at top, aligned with Header) -->
+            <div class="hud-column-right">
+                <!-- Right sidebar: Minimap, Teleport slots, Sound panel -->
+                <section id="hud-sidebar-right" class="glass-panel hud-interactive">
+                <div style="display: flex; flex-direction: column; gap: 18px;">
+                    
+                    <!-- Minimap glass block -->
+                    <div>
+                        <h2 style="font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px;">
+                            Global Mini Map
+                        </h2>
+                        <div id="minimap-wrapper">
+                            <canvas id="minimap-canvas"></canvas>
+                            <div id="minimap-locator-glow"></div>
+                            <div id="minimap-locator"></div>
+                            <div class="minimap-crosshair-label">クリックで転移 (Click to Warp)</div>
+                        </div>
+                    </div>
+
+                    <!-- Teleport presets list -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <h2 style="font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 1.2px; font-weight: 700;">
+                                都市転移の門 (Teleport Gates)
+                            </h2>
+                            <!-- Primary Tokyo quick travel link button -->
+                            <button id="btn-warp-tokyo" class="hud-interactive" style="border: 1px solid #3b82f6; background: rgba(59,130,246,0.15); color: #fbbf24; font-family: var(--font-sans); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 6px rgba(59,130,246,0.25);">
+                                🗼 東京へ帰還
+                            </button>
+                        </div>
+                        
+                        <!-- Search input box -->
+                        <div style="position: relative; margin-bottom: 10px;">
+                            <input type="text" id="city-search-input" class="hud-interactive" placeholder="🔍 都市名・国名・特色で検索..." style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.3); color: #fff; font-family: var(--font-sans); font-size: 11px; outline: none; transition: all 0.2s;">
+                        </div>
+
+                        <div class="landmark-grid" id="teleport-landmarks-grid" style="max-height: 140px; overflow-y: auto;">
+                            <!-- Teleport buttons inserted dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Audio volume mixer controls -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; gap: 10px;">
+                        <button id="btn-toggle-bgm" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #fff; font-size: 11px; font-weight: 700; padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                            🎵 音楽再生 (Play Theme)
+                        </button>
+                        <div class="volume-slider-container">
+                            <span>主音量 (Master)</span>
+                            <input type="range" id="slider-vol-master" class="volume-range" min="0" max="1" step="0.05" value="0.6">
+                        </div>
+                        <div class="volume-slider-container">
+                            <span>音楽 (Music)</span>
+                            <input type="range" id="slider-vol-bgm" class="volume-range" min="0" max="1" step="0.05" value="0.7">
+                        </div>
+                        <div class="volume-slider-container">
+                            <span>足音 (SFX)</span>
+                            <input type="range" id="slider-vol-sfx" class="volume-range" min="0" max="1" step="0.05" value="0.8">
+                        </div>
+                    </div>
+
+                    <!-- Display engine visual switch options -->
+                    <div>
+                        <h2 style="font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px;">
+                            環境設定 (Settings)
+                        </h2>
+                        <div class="switch-container">
+                            <span class="switch-label">オートウォーク (Auto Walk - [P])</span>
+                            <label class="switch">
+                                <input type="checkbox" id="checkbox-autowalk">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label">カメラ追尾ロック (Lock Camera)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="checkbox-camerafollow" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label">地形ドロップシャドウ (Drop Shadows)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="checkbox-shadows" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label">環境パーティクル (Weather Particles)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="checkbox-weather" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label">CRTレトロ走査線 (CRT Filter)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="checkbox-crt" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+            </div> <!-- End Right Column -->
+        </div> <!-- End Main Columns -->
+
+        <!-- Notification Ticker overlay (bottom center sidebar area) -->
+        <div id="hud-notification-ticker" style="position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%); pointer-events: none; background: rgba(5,7,12,0.8); border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; padding: 6px 18px; font-family: var(--font-mono); font-size: 12px; color: #fbbf24; box-shadow: 0 4px 20px rgba(0,0,0,0.5); opacity: 0.0; transition: opacity 0.3s ease; z-index: 50;">
+            [ システムメッセージ ]
+        </div>
+
+        <!-- Bottom guide instructions card bar -->
+        <footer class="glass-panel hud-interactive" id="hud-bottom-bar">
+            <div class="control-instruction">
+                <span class="control-key">W</span>
+                <span class="control-key">A</span>
+                <span class="control-key">S</span>
+                <span class="control-key">D</span>
+                または
+                <span class="control-key">↑</span>
+                <span class="control-key">←</span>
+                <span class="control-key">↓</span>
+                <span class="control-key">→</span>
+                <span style="margin-left: 8px;">勇者移動 (Move)</span>
+            </div>
+            <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.15);"></div>
+            <div class="control-instruction">
+                <span class="control-key">Shift</span>
+                <span>高速ダッシュ (Run)</span>
+            </div>
+            <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.15);"></div>
+            <div class="control-instruction">
+                <span class="control-key">P</span>
+                <span>自動前進 (Auto-Walk)</span>
+            </div>
+            <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.15);"></div>
+            <div class="control-instruction">
+                <span class="control-key">マウスドラッグ</span>
+                <span>マップスクロール / ダブルクリックで追尾リセット</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Modular Script Injections (Version cache-busting active) -->
+    <script src="js/noise.js?v=2.1"></script>
+    <script src="js/assets.js?v=2.1"></script>
+    <script src="js/cities_db.js?v=2.1"></script>
+    <script src="js/audio.js?v=2.1"></script>
+    <script src="js/game.js?v=2.1"></script>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+# System Files
+.DS_Store
+Thumbs.db
+.cache/
+
+# Scratch Files & Python Utilities
+scratch/
+*.pyc
+__pycache__/
+.venv/
+venv/
+env/
+ENV/
+
+# IDEs & Editor Configuration
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.project
+.settings/
+
+# Temp Logs & Local Backups
+*.log
+*.tmp
+*.bak

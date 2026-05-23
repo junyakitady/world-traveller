@@ -1,0 +1,588 @@
+/*
+ * Retro Earth Explorer - Style Sheet
+ * Premium Glassmorphic Layouts, Retro-Dashboard Tickers, CRT Screen Scanners
+ */
+
+/* Import Outfit font for geometric UI and Share Tech Mono for cyber-readouts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  
+  --glass-bg: rgba(10, 15, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.4);
+  --glow-amber: 0 0 20px rgba(245, 158, 11, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #05070c;
+  color: #f1f5f9;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 30, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Base Layout Containers */
+#viewport-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Global HUD UI Layer */
+#hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+}
+
+/* Pointer events restorer for active UI elements */
+.hud-interactive {
+  pointer-events: auto;
+}
+
+/* Glassmorphism Panel styles */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtitle and headings glow */
+.font-mono-lcd {
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+}
+.text-glow-amber {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+}
+
+/* Header UI Style */
+header.glass-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.logo-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #ea580c 100%);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--glow-amber);
+}
+
+.logo-icon {
+  font-size: 22px;
+  color: #05070c;
+  font-weight: 800;
+}
+
+/* Main Two-Column Layout */
+.hud-main-columns {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.hud-column-left {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-self: flex-start;
+  min-height: 0;
+}
+
+.hud-column-right {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  min-height: 0;
+}
+
+/* Dashboard Sidebar Columns */
+#hud-sidebar-left {
+  width: 100%;
+  max-height: calc(100vh - 210px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#hud-sidebar-right {
+  width: 100%;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Telemetry display elements */
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-b: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.telemetry-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+.telemetry-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+/* Biome Badge indicator */
+.biome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.biome-deepSea { background-color: rgba(30, 58, 138, 0.4); border-color: #3b82f6; color: #93c5fd; }
+.biome-shallowSea { background-color: rgba(2, 132, 199, 0.4); border-color: #0ea5e9; color: #7dd3fc; }
+.biome-coralReef { background-color: rgba(20, 184, 166, 0.4); border-color: #14b8a6; color: #99f6e4; }
+.biome-plains { background-color: rgba(34, 197, 94, 0.35); border-color: #22c55e; color: #86efac; }
+.biome-forest { background-color: rgba(21, 128, 61, 0.4); border-color: #16a34a; color: #a7f3d0; }
+.biome-walkableHills { background-color: rgba(133, 77, 14, 0.4); border-color: #ca8a04; color: #fde047; }
+.biome-impassableMountains { background-color: rgba(71, 85, 105, 0.5); border-color: #94a3b8; color: #cbd5e1; }
+.biome-snowfield { background-color: rgba(248, 250, 252, 0.25); border-color: #e2e8f0; color: #ffffff; }
+.biome-desert { background-color: rgba(234, 179, 8, 0.35); border-color: #fbbf24; color: #fef08a; }
+
+/* Minimap container classes */
+#minimap-wrapper {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: crosshair;
+}
+
+#minimap-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.minimap-crosshair-label {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(5, 7, 12, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Teleport Destination Grid Buttons */
+.landmark-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.landmark-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.landmark-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.landmark-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.landmark-desc {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Bottom Controls Instruction card */
+#hud-bottom-bar {
+  align-self: center;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 10px 28px;
+  max-width: 720px;
+  width: auto;
+}
+
+.control-key {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  box-shadow: 0 2px 0 #94a3b8;
+  margin-right: 4px;
+}
+
+.control-instruction {
+  font-size: 12px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+}
+
+/* Slide Switch Components */
+.switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.switch-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: .3s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* Volume Slider styling */
+.volume-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.volume-slider-container span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  width: 80px;
+}
+
+.volume-range {
+  flex: 1;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.15);
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+}
+
+/* CRT monitor lines styling overlay */
+.crt-effect::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.18) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 4px, 6px 100%;
+  z-index: 99;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.crt-active.crt-effect::after {
+  opacity: 0.4;
+}
+
+/* Simple keyframe for pulsing locator */
+@keyframes pulse-locator {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(2.0); opacity: 0; }
+}
+
+#minimap-locator-glow {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: pulse-locator 1.5s infinite ease-out;
+}
+
+#minimap-locator {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+/* Hardware accelerated CSS linear gradient blur masks for Tilt-Shift! */
+.tilt-shift-mask {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 12%;
+  z-index: 2;
+  pointer-events: none;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.tilt-shift-top {
+  top: 0;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+}
+
+.tilt-shift-bottom {
+  bottom: 0;
+  mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+}
+
+/* Loading Overlay Page */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #05070c;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  box-shadow: var(--glow-cyan);
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #3b82f6;
+  margin-top: 24px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: pulse-text 1.5s infinite;
+}
+
+.loading-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 0.6; text-shadow: 0 0 5px rgba(59, 130, 246, 0.2); }
+  50% { opacity: 1.0; text-shadow: 0 0 15px rgba(59, 130, 246, 0.8); }
+}
+
+/* Clock / Time tracker styles */
+.time-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.time-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.time-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #facc15, #f97316, #3b82f6, #1e3a8a, #facc15);
+  background-size: 500% 100%;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+.time-icon {
+  font-size: 16px;
+}
+.paragraph-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+/* Search input glowing effect when active */
+#city-search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Primary Tokyo quick travel portal button hover changes */
+#btn-warp-tokyo:hover {
+  background: rgba(59, 130, 246, 0.3) !important;
+  border-color: #fbbf24 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5) !important;
+}
