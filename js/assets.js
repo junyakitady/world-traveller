@@ -198,10 +198,10 @@ const Assets = (() => {
             
             // Layout size adjustments: Trees are tall (16x24), Mountains are big (32x32), others 16x16
             let w = 16, h = 16;
-            if (type === 'forest_tree' || type === 'snow_tree') {
+            if (type === 'forest_tree' || type === 'snow_tree' || type === 'hill_rock') {
                 w = 16; h = 24;
             } else if (type === 'mountain_peak') {
-                w = 32; h = 32;
+                w = 24; h = 24;
             }
 
             canvas.width = w * pixelScale;
@@ -212,20 +212,20 @@ const Assets = (() => {
             const p = PALETTE;
 
             if (type === 'forest_tree') {
-                // Tall Pine/Oak hybrid tree
-                // Trunk (draw bottom 8 pixels center)
+                // Tall 16x24 JRPG Pine (Trunk base Y=22, leaves 1px bottom safe margin to prevent sea leakage!)
+                // Trunk
                 ctx.fillStyle = p.boots;
-                ctx.fillRect(7 * pixelScale, 15 * pixelScale, 2 * pixelScale, 9 * pixelScale);
+                ctx.fillRect(7 * pixelScale, 15 * pixelScale, 2 * pixelScale, 7 * pixelScale);
 
-                // Canopy layers (Overlapping green disks/triangles)
+                // Canopy layers (Foliage)
                 ctx.fillStyle = p.forest;
-                // Bottom foliage tier
+                // Bottom foliage tier (Y=10 to 15)
                 ctx.fillRect(2 * pixelScale, 10 * pixelScale, 12 * pixelScale, 6 * pixelScale);
                 ctx.fillRect(3 * pixelScale, 9 * pixelScale, 10 * pixelScale, 8 * pixelScale);
-                // Middle foliage tier
+                // Middle foliage tier (Y=5 to 9)
                 ctx.fillRect(4 * pixelScale, 5 * pixelScale, 8 * pixelScale, 5 * pixelScale);
                 ctx.fillRect(5 * pixelScale, 4 * pixelScale, 6 * pixelScale, 7 * pixelScale);
-                // Top foliage tier
+                // Top foliage tier (Y=1 to 4)
                 ctx.fillRect(6 * pixelScale, 1 * pixelScale, 4 * pixelScale, 4 * pixelScale);
                 ctx.fillRect(7 * pixelScale, 0 * pixelScale, 2 * pixelScale, 6 * pixelScale);
 
@@ -237,13 +237,13 @@ const Assets = (() => {
                 ctx.fillRect(9 * pixelScale, 5 * pixelScale, 2 * pixelScale, 2 * pixelScale);
                 ctx.fillRect(8 * pixelScale, 2 * pixelScale, 1 * pixelScale, 2 * pixelScale);
 
-                // Light Highlights (Top-left)
+                // Highlights
                 ctx.fillStyle = p.plains;
                 ctx.fillRect(3 * pixelScale, 10 * pixelScale, 2 * pixelScale, 2 * pixelScale);
                 ctx.fillRect(4 * pixelScale, 5 * pixelScale, 2 * pixelScale, 2 * pixelScale);
                 ctx.fillRect(6 * pixelScale, 1 * pixelScale, 1 * pixelScale, 2 * pixelScale);
 
-                // Red juicy apples!
+                // Red apples!
                 ctx.fillStyle = p.cape;
                 ctx.fillRect(4 * pixelScale, 12 * pixelScale, 1 * pixelScale, 1 * pixelScale);
                 ctx.fillRect(11 * pixelScale, 11 * pixelScale, 1 * pixelScale, 1 * pixelScale);
@@ -251,10 +251,10 @@ const Assets = (() => {
                 ctx.fillRect(9 * pixelScale, 3 * pixelScale, 1 * pixelScale, 1 * pixelScale);
             }
             else if (type === 'snow_tree') {
-                // Snowy Tall Pine Tree
+                // Tall 16x24 Snowy Pine (Trunk base Y=22, leaves 1px bottom safe margin!)
                 // Trunk
                 ctx.fillStyle = p.boots;
-                ctx.fillRect(7 * pixelScale, 15 * pixelScale, 2 * pixelScale, 9 * pixelScale);
+                ctx.fillRect(7 * pixelScale, 15 * pixelScale, 2 * pixelScale, 7 * pixelScale);
 
                 const pineTeal = '#0f766e';
                 const pineTealDark = '#115e59';
@@ -274,14 +274,12 @@ const Assets = (() => {
                 ctx.fillRect(8 * pixelScale, 7 * pixelScale, 3 * pixelScale, 3 * pixelScale);
                 ctx.fillRect(8 * pixelScale, 2 * pixelScale, 1 * pixelScale, 2 * pixelScale);
 
-                // Snowy caps details (draw thick white snow cap steps on top of each tier)
+                // Snowy caps details
                 ctx.fillStyle = p.snow;
                 ctx.fillRect(7 * pixelScale, 0 * pixelScale, 2 * pixelScale, 1 * pixelScale);
                 ctx.fillRect(6 * pixelScale, 1 * pixelScale, 4 * pixelScale, 1 * pixelScale);
-                
                 ctx.fillRect(5 * pixelScale, 4 * pixelScale, 6 * pixelScale, 1 * pixelScale);
                 ctx.fillRect(6 * pixelScale, 5 * pixelScale, 4 * pixelScale, 1 * pixelScale);
-                
                 ctx.fillRect(3 * pixelScale, 9 * pixelScale, 10 * pixelScale, 1 * pixelScale);
                 ctx.fillRect(4 * pixelScale, 10 * pixelScale, 8 * pixelScale, 1 * pixelScale);
 
@@ -324,36 +322,57 @@ const Assets = (() => {
                 drawPixel(ctx, 11, 6, cNeedle, pixelScale);
             }
             else if (type === 'hill_rock') {
-                // Brown grassy earth mound
+                // Variegated Green-and-Brown JRPG Mountain Spire (Stands from bottom boundary Y=23 up to Y=2!)
+                // 1. Earth base slope mound (Y=15 to 23, bottom-aligned)
                 ctx.fillStyle = p.hillBase;
-                ctx.fillRect(2 * pixelScale, 9 * pixelScale, 12 * pixelScale, 7 * pixelScale);
-                ctx.fillRect(4 * pixelScale, 6 * pixelScale, 8 * pixelScale, 3 * pixelScale);
-                ctx.fillRect(6 * pixelScale, 5 * pixelScale, 4 * pixelScale, 1 * pixelScale);
+                ctx.fillRect(1 * pixelScale, 15 * pixelScale, 14 * pixelScale, 9 * pixelScale);
+                ctx.fillRect(2 * pixelScale, 12 * pixelScale, 12 * pixelScale, 12 * pixelScale);
+                ctx.fillRect(4 * pixelScale, 9 * pixelScale, 8 * pixelScale, 15 * pixelScale);
 
-                // Rock Shadow
-                ctx.fillStyle = p.boots;
-                ctx.fillRect(8 * pixelScale, 6 * pixelScale, 5 * pixelScale, 10 * pixelScale);
-                ctx.fillRect(10 * pixelScale, 5 * pixelScale, 2 * pixelScale, 1 * pixelScale);
-
-                // Grass top caps
+                // Variegated green moss patches on slope base
+                ctx.fillStyle = p.forest;
+                ctx.fillRect(2 * pixelScale, 16 * pixelScale, 4 * pixelScale, 4 * pixelScale);
+                ctx.fillRect(10 * pixelScale, 17 * pixelScale, 3 * pixelScale, 4 * pixelScale);
                 ctx.fillStyle = p.plains;
-                ctx.fillRect(2 * pixelScale, 9 * pixelScale, 2 * pixelScale, 1 * pixelScale);
-                ctx.fillRect(4 * pixelScale, 6 * pixelScale, 2 * pixelScale, 1 * pixelScale);
-                ctx.fillRect(6 * pixelScale, 5 * pixelScale, 4 * pixelScale, 1 * pixelScale);
-                ctx.fillRect(10 * pixelScale, 6 * pixelScale, 2 * pixelScale, 1 * pixelScale);
-                ctx.fillRect(12 * pixelScale, 9 * pixelScale, 2 * pixelScale, 1 * pixelScale);
+                ctx.fillRect(3 * pixelScale, 15 * pixelScale, 2 * pixelScale, 1 * pixelScale);
+                ctx.fillRect(11 * pixelScale, 16 * pixelScale, 2 * pixelScale, 1 * pixelScale);
 
-                // Small side grey stone
+                // 2. Rugged rock spire column (Y=6 to 14, grey rock)
                 ctx.fillStyle = p.rock;
-                ctx.fillRect(11 * pixelScale, 12 * pixelScale, 3 * pixelScale, 4 * pixelScale);
+                ctx.fillRect(3 * pixelScale, 8 * pixelScale, 10 * pixelScale, 8 * pixelScale);
+                ctx.fillRect(5 * pixelScale, 4 * pixelScale, 6 * pixelScale, 5 * pixelScale);
+
+                // Shaded right half of rock column
                 ctx.fillStyle = p.rockDark;
-                ctx.fillRect(13 * pixelScale, 12 * pixelScale, 1 * pixelScale, 4 * pixelScale);
+                ctx.fillRect(8 * pixelScale, 8 * pixelScale, 5 * pixelScale, 8 * pixelScale);
+                ctx.fillRect(8 * pixelScale, 4 * pixelScale, 3 * pixelScale, 5 * pixelScale);
+
+                // 3. Variegated moss highlights & vegetation steps on spires
+                ctx.fillStyle = p.forest;
+                ctx.fillRect(4 * pixelScale, 9 * pixelScale, 2 * pixelScale, 2 * pixelScale);
+                ctx.fillRect(9 * pixelScale, 7 * pixelScale, 3 * pixelScale, 2 * pixelScale);
+                ctx.fillStyle = p.plains;
+                ctx.fillRect(4 * pixelScale, 8 * pixelScale, 2 * pixelScale, 1 * pixelScale);
+                ctx.fillRect(9 * pixelScale, 6 * pixelScale, 3 * pixelScale, 1 * pixelScale);
+
+                // 4. Upper peak dome with moss cap (Y=2 to 3)
+                ctx.fillStyle = p.plains;
+                ctx.fillRect(6 * pixelScale, 2 * pixelScale, 4 * pixelScale, 2 * pixelScale);
+                ctx.fillStyle = p.forest;
+                ctx.fillRect(8 * pixelScale, 3 * pixelScale, 2 * pixelScale, 1 * pixelScale);
+
+                // 5. Deep cracks and outlines
+                ctx.fillStyle = p.outline;
+                ctx.fillRect(7 * pixelScale, 6 * pixelScale, 1 * pixelScale, 4 * pixelScale);
+                ctx.fillRect(8 * pixelScale, 11 * pixelScale, 1 * pixelScale, 5 * pixelScale);
             }
             else if (type === 'mountain_peak') {
-                // Massive majestic 32x32 pixel mountain range peak!
-                const mid = 16;
-                for (let y = 2; y < 32; y++) {
-                    const width = Math.floor(y * 0.95);
+                // Pure 24x24 scale mountain peak (2/3 size! Stands flat at bottom edge Y=23)
+                const mid = 12;
+                const peakY = 3;
+                for (let y = peakY; y < 24; y++) {
+                    const dy = y - peakY;
+                    const width = Math.floor(dy * 1.05);
                     const left = mid - Math.floor(width / 2);
 
                     // Left rock side (Light)
@@ -365,26 +384,26 @@ const Assets = (() => {
                     ctx.fillRect(mid * pixelScale, y * pixelScale, (left + width - mid) * pixelScale, pixelScale);
                 }
 
-                // Snowcap overlay (from peak down to y=12)
-                for (let y = 2; y < 12; y++) {
-                    const width = Math.floor(y * 0.95);
+                // Snowcap overlay (from peak down to y=11, 8px high)
+                for (let y = peakY; y < 11; y++) {
+                    const dy = y - peakY;
+                    const width = Math.floor(dy * 1.05);
                     const left = mid - Math.floor(width / 2);
 
-                    // Left snow side (Light)
+                    // Left snow side
                     ctx.fillStyle = p.snow;
                     ctx.fillRect(left * pixelScale, y * pixelScale, (mid - left) * pixelScale, pixelScale);
 
-                    // Right snow side (Shadow)
+                    // Right snow side
                     ctx.fillStyle = p.snowShadow;
                     ctx.fillRect(mid * pixelScale, y * pixelScale, (left + width - mid) * pixelScale, pixelScale);
                 }
 
-                // Jagged stone surface cracks patterns
+                // Jagged stone cracks (perfectly scaled for 24x24)
                 ctx.fillStyle = p.outline;
-                ctx.fillRect(15 * pixelScale, 13 * pixelScale, 1 * pixelScale, 6 * pixelScale);
-                ctx.fillRect(16 * pixelScale, 19 * pixelScale, 1 * pixelScale, 4 * pixelScale);
-                ctx.fillRect(17 * pixelScale, 16 * pixelScale, 1 * pixelScale, 3 * pixelScale);
-                ctx.fillRect(14 * pixelScale, 21 * pixelScale, 1 * pixelScale, 5 * pixelScale);
+                ctx.fillRect(11 * pixelScale, 13 * pixelScale, 1 * pixelScale, 4 * pixelScale);
+                ctx.fillRect(12 * pixelScale, 17 * pixelScale, 1 * pixelScale, 2 * pixelScale);
+                ctx.fillRect(13 * pixelScale, 15 * pixelScale, 1 * pixelScale, 2 * pixelScale);
             }
             else if (type === 'grass_tuft') {
                 ctx.fillStyle = p.plainsDark;
@@ -708,27 +727,7 @@ const Assets = (() => {
             return canvas;
         },
 
-        /**
-         * Preloads the 12 core hero canvases and generic billboards into the cache pool.
-         */
-        preloadAll2DAssets() {
-            const directions = ['down', 'up', 'left', 'right'];
-            const states = ['stand', 'walk1', 'walk2'];
-            
-            // Preload Hero states
-            directions.forEach(dir => {
-                states.forEach(state => {
-                    const key = `hero_${dir}_${state}`;
-                    canvasCache[key] = this.createHeroCanvas(dir, state);
-                });
-            });
 
-            // Preload static decorations
-            const decorations = ['forest_tree', 'snow_tree', 'desert_cactus', 'hill_rock', 'mountain_peak', 'grass_tuft', 'coral_plant', 'megalopolis_castle', 'village_cottage'];
-            decorations.forEach(type => {
-                canvasCache[type] = this.createBillboardCanvas(type);
-            });
-        },
 
         /**
          * Preloads the 12 core hero canvases and generic billboards into the cache pool.

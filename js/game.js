@@ -501,11 +501,11 @@ const GameEngine = (() => {
         sCtx.drawImage(sImg, 0, 0, W, H);
         const sData = sCtx.getImageData(0, 0, W, H).data;
 
-        // Extract elevation heights
+        // Extract elevation heights (using the RED channel for true physical displacement meters)
         for (let r = 0; r < H; r++) {
             for (let c = 0; c < W; c++) {
                 const idx = (r * W + c) * 4;
-                const hVal = (hData[idx] + hData[idx + 1] + hData[idx + 2]) / 3;
+                const hVal = hData[idx]; // Red channel holds the physical terrain displacement
                 elevationGrid[r * W + c] = hVal;
             }
         }
@@ -527,14 +527,17 @@ const GameEngine = (() => {
                 satelliteColorsGrid[c][r] = { r: sr, g: sg, b: sb };
 
                 const elev = elevationGrid[r * W + c];
-                const biome = classifyBiomeFromRGB(sr, sg, sb, lat, lon, elev);
+                // Use the original average RGB mask to keep the land/sea biomes layout exactly identical!
+                const hIdx = (r * W + c) * 4;
+                const avgElev = (hData[hIdx] + hData[hIdx + 1] + hData[hIdx + 2]) / 3;
+                const biome = classifyBiomeFromRGB(sr, sg, sb, lat, lon, elev, avgElev);
                 biomesGrid[c][r] = biome;
 
                 const WATER_LEVEL = 20;
-                if (elev <= WATER_LEVEL) {
-                    heightsCache[c][r] = (elev - WATER_LEVEL) * 0.2;
+                if (avgElev <= WATER_LEVEL) {
+                    heightsCache[c][r] = (avgElev - WATER_LEVEL) * 0.2;
                 } else {
-                    heightsCache[c][r] = (elev - WATER_LEVEL) * 0.28;
+                    heightsCache[c][r] = (avgElev - WATER_LEVEL) * 0.28;
                 }
             }
         }
@@ -642,7 +645,7 @@ const GameEngine = (() => {
         };
     }
 
-    function classifyBiomeFromRGB(r, g, b, lat, lon, elev) {
+    function classifyBiomeFromRGB(r, g, b, lat, lon, elev, avgElev) {
         const hsl = rgbToHsl(r, g, b);
         const h = hsl.h;
         const s = hsl.s;
@@ -650,39 +653,38 @@ const GameEngine = (() => {
 
         const WATER_LEVEL = 20;
 
-        // Water vs Land check (using hybrid elevation map & color thresholds)
+        // Water vs Land check (using hybrid elevation map & color thresholds with average height mask)
         const isWaterColor = (h >= 160 && h <= 260 && l < 65 && s > 15);
         const isDeepWaterColor = (r < 32 && g < 45 && b < 85);
 
-        if (elev <= WATER_LEVEL || isWaterColor || isDeepWaterColor) {
+        if (avgElev <= WATER_LEVEL || isWaterColor || isDeepWaterColor) {
             // Deep Sea
-            if (l < 16 || b < 45 || elev <= 8) {
+            if (l < 16 || b < 45 || avgElev <= 8) {
                 return 'deepSea';
             }
             // Coral Reef: Warm tropical latitudes, shallow turquoise waters
-            if (Math.abs(lat) < 24 && h >= 165 && h <= 195 && l >= 36 && s > 40 && elev > 8) {
+            if (Math.abs(lat) < 24 && h >= 165 && h <= 195 && l >= 36 && s > 40 && avgElev > 8) {
                 return 'coralReef';
             }
             return 'shallowSea';
         }
 
-        // Land Biomes
-        if (elev > 185) {
+        // Land Biomes (Impassable Mountains: Real-world 5,000m+ threshold => (144 - 2) * 35 = 4,970m, first step above is 145 = 5,005m)
+        if (elev > 144) {
             return 'impassableMountains';
         }
 
         // Snowfield: Glacier white colors or cold polar land masses
         const isPolarZone = (lat > 63 || lat < -58);
         const isBrightWhite = (l >= 80 && s < 22);
-        const isHighAltSnow = (elev > 145 && l >= 72 && s < 18);
+        const isHighAltSnow = (elev > 85 && l >= 72 && s < 18); // ~2,900m+ snow peaks (using true physical R channel)
 
         if (isBrightWhite || isHighAltSnow || (isPolarZone && l >= 55 && s < 25)) {
             return 'snowfield';
         }
 
-        // Rocky mountains (gray/slate low-saturation rock at high altitude)
-        if (elev > 140 && s < 14 && l >= 25 && l <= 60) {
-            if (elev > 165) return 'impassableMountains';
+        // Rocky mountains / peaks (gray/slate low-saturation rock at high altitude)
+        if (elev > 30 && s < 14 && l >= 25 && l <= 60) { // ~1,000m+ rock faces (using true physical R channel)
             return 'walkableHills';
         }
 
@@ -694,18 +696,18 @@ const GameEngine = (() => {
             return 'desert';
         }
 
+        // Walkable Hills (Arid brown, transitions) - Swapped prior to Forest check (Strict Height-Based Gate!)
+        const isHillColor = (h >= 18 && h <= 42 && l >= 22 && l <= 54 && s < 38);
+        if (isHillColor || (elev > 30)) { // ~1,000m+ strict general hills (no color saturation gate!)
+            return 'walkableHills';
+        }
+
         // Forest: Deep dark greens
         const isForestColor = (h >= 60 && h <= 160 && l < 36 && s > 15);
         const isForestRGB = (g > r + 12 && g > b + 12 && l < 40);
 
         if (isForestColor || isForestRGB) {
             return 'forest';
-        }
-
-        // Walkable Hills (Arid brown, transitions)
-        const isHillColor = (h >= 18 && h <= 42 && l >= 22 && l <= 54 && s < 38);
-        if (isHillColor || (elev > 140 && s < 25)) {
-            return 'walkableHills';
         }
 
         // Default open land
@@ -1089,7 +1091,7 @@ const GameEngine = (() => {
         const lat = 90 - 180 * (rowIdx / H);
 
         const elevationRaw = elevationGrid[rowIdx * W + colIdx];
-        const elevationMeters = Math.max(0, Math.round((elevationRaw - 20) * 45));
+        const elevationMeters = Math.max(0, Math.round((elevationRaw - 2) * 35.0));
 
         const currentBiome = biomesGrid[colIdx][rowIdx];
         const biomeData = BIOME_DETAILS[currentBiome] || { name: "未知の地 (Unknown)", desc: "踏破が不可能な地域。" };
@@ -1294,14 +1296,18 @@ const GameEngine = (() => {
                 else if (biome === 'village') assetType = 'village_cottage';
 
                 if (assetType) {
-                    const sortY = (r + 1) * TILE_SIZE; // sort bottom coordinate
+                    let sortY = (r + 1) * TILE_SIZE; // sort bottom coordinate
                     let drawWidth = TILE_SIZE;
                     let drawHeight = TILE_SIZE;
                     let dx = tileX;
                     let dy = tileY;
 
                     // Size and offsets configurations:
-                    if (assetType === 'forest_tree' || assetType === 'snow_tree' || assetType === 'megalopolis_castle') {
+                    if (assetType === 'forest_tree' || assetType === 'snow_tree') {
+                        dy = tileY - 24; // Shifting up by 24px (leaves top at r*48-24, bottom at (r+1)*48)
+                        sortY = (r + 0.92) * TILE_SIZE; // Rooted safe at Y=0.92 grid unit (4px safe from bottom line!)
+                    }
+                    else if (assetType === 'forest_tree' || assetType === 'snow_tree' || assetType === 'hill_rock' || assetType === 'megalopolis_castle') {
                         drawWidth = TILE_SIZE;
                         drawHeight = TILE_SIZE * 1.5; // taller 48x72
                         dy = (r + 1) * TILE_SIZE - drawHeight + offsetY;
@@ -1313,9 +1319,9 @@ const GameEngine = (() => {
                         }
                     }
                     else if (assetType === 'mountain_peak') {
-                        drawWidth = TILE_SIZE * 2.0; // massive 96x96
-                        drawHeight = TILE_SIZE * 2.0;
-                        dx = (c - 0.5) * TILE_SIZE + offsetX;
+                        drawWidth = TILE_SIZE * 1.33; // crisp 2/3 size (64x64)
+                        drawHeight = TILE_SIZE * 1.33;
+                        dx = (c - 0.17) * TILE_SIZE + offsetX; // centered!
                         dy = (r + 1) * TILE_SIZE - drawHeight + offsetY;
                     }
                     else if (assetType !== 'coral_plant' && assetType !== 'grass_tuft' && assetType !== 'village_cottage') {
@@ -1384,13 +1390,13 @@ const GameEngine = (() => {
                     ctx.restore();
                 }
 
-                // Draw main decoration sprite canvas
+                // Draw main decoration sprite canvas (Synced with exact pre-rendered specs!)
                 let drawW = TILE_SIZE;
                 let drawH = TILE_SIZE;
-                if (item.assetType === 'forest_tree' || item.assetType === 'snow_tree' || item.assetType === 'megalopolis_castle') {
+                if (item.assetType === 'forest_tree' || item.assetType === 'snow_tree' || item.assetType === 'hill_rock' || item.assetType === 'megalopolis_castle') {
                     drawW = TILE_SIZE; drawH = TILE_SIZE * 1.5;
                 } else if (item.assetType === 'mountain_peak') {
-                    drawW = TILE_SIZE * 2; drawH = TILE_SIZE * 2;
+                    drawW = TILE_SIZE * 1.33; drawH = TILE_SIZE * 1.33;
                 }
                 
                 ctx.drawImage(decCanvas, item.x, item.y, drawW, drawH);
